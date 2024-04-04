@@ -1,39 +1,48 @@
 //Branch Address Conditions
-parameter PC = 0;   //Case when branch_addr = pc + imm
-parameter RD = 1;   //Case when branch_addr = imm + rs1d
-parameter BNT = 0;  //Case when branch is taken
-parameter BT = 1;  //Case when branch is NOT taken
+parameter PC = 0;  //Case when branch_addr = pc + imm
+parameter RD = 1;  //Case when branch_addr = imm + rs1d
 
-module Branch_Addr_Calc # (
+module Branch_Addr_Calc #(
     WordSize = 32
-)(
-    input addr_mode, branch_taken,
-    input [WordSize - 1:0] imm, rs1d,
-    output logic [WordSize - 1:0] branch_addr, npc
+) (
+    input addr_mode,
+    input branch_taken,
+    input [WordSize - 1:0] imm,
+    input [WordSize - 1:0] rs1d,
+    input [WordSize - 1:0] pc_in,
+    output logic [WordSize - 1:0] branch_addr,
+    output logic [WordSize - 1:0] npc
 );
 
-always_comb begin
-    case(addr_mode)
-        PC:
-            branch_addr = pc + imm;
-            case(branch_taken)
-                BNT: 
-                    npc = pc;
-                BT:
-                    npc = branch_addr;
-            endcase
-        RD:
-            branch_addr = imm + rs1d;
-            case(branch_taken)
-                BNT: 
-                    npc = pc;
-                BT:
-                    npc = branch_addr;
-            endcase
-        default: 
-            branch_addr = pc + imm;
-            npc = pc;
+  always_comb begin
+    case (addr_mode)
+      PC:
+      case (branch_taken)
+        1'b0: begin
+          branch_addr = pc_in + imm;
+          npc = pc_in;
+        end
+        1'b1: begin
+          branch_addr = pc_in + imm;
+          npc = branch_addr;
+        end
+      endcase
+      RD:
+      case (branch_taken)
+        1'b0: begin
+          branch_addr = imm + rs1d;
+          npc = pc_in;
+        end
+        1'b1: begin
+          branch_addr = imm + rs1d;
+          npc = branch_addr;
+        end
+      endcase
+      default: begin
+        branch_addr = pc_in + imm;
+        npc = pc_in;
+      end
     endcase
-end
+  end
 
 endmodule
